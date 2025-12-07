@@ -6,6 +6,8 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <ctime>
+#include <iomanip>
 
 using namespace std;
 
@@ -279,11 +281,26 @@ void Sistema::registrarTreino() {
     double tempo = f->calcularTempoTotal();
     double calorias = f->calcularCaloriasTotais();
 
-    historico.adicionarRegistro(f->getId(), f->getNome(), tempo, calorias);
+    // Construir um RegistroTreino e passar o objeto para o histórico
+    RegistroTreino reg;
+    // Preencher data/hora atual formatada
+    std::time_t now = std::time(nullptr);
+    std::tm* lt = std::localtime(&now);
+    std::ostringstream oss;
+    oss << std::put_time(lt, "%Y-%m-%d %H:%M:%S");
+    reg.dataHora = oss.str();
+
+    reg.idFicha = f->getId();
+    reg.nomeFicha = f->getNome();
+    reg.tempoTotal = tempo;
+    reg.caloriasTotal = calorias;
+
+    historico.adicionarRegistro(reg);
 
     cout << "Treino registrado!\n";
 }
 
-// void Sistema::exibirHistorico() {
-//     Historico::exibirHistorico();
-// }
+
+void Sistema::exibirHistorico() {
+    historico.exibirHistorico();
+}
