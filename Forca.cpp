@@ -1,57 +1,54 @@
 #include "Forca.h"
 #include <iostream>
+#include <iomanip>
 
-// Construtor para novos cadastros
-Forca::Forca(std::string nome, double carga, int series, int repeticoes, int tempoDescanso)
-    : Exercicio(nome), carga(carga), series(series), repeticoes(repeticoes), tempoDescanso(tempoDescanso) {
-}
+using namespace std;
 
-// Construtor para leitura de arquivo
-Forca::Forca(int id, std::string nome, bool ativo, double carga, int series, int repeticoes, int tempoDescanso)
-    : Exercicio(id, nome, ativo), carga(carga), series(series), repeticoes(repeticoes), tempoDescanso(tempoDescanso) {
-}
+Forca::Forca(const string &nome, double carga, int series, int repeticoes, int descanso)
+    : Exercicio(nome), carga(carga), series(series), repeticoes(repeticoes), descanso(descanso) {}
 
-// Exibir detalhes do exercício
+Forca::Forca(int id, const string &nome, double carga, int series, int repeticoes, int descanso, bool ativo)
+    : Exercicio(id, nome, ativo), carga(carga), series(series), repeticoes(repeticoes), descanso(descanso) {}
+
 void Forca::exibirDetalhes() const {
-    std::cout << "Tipo: Força" << std::endl;
-    std::cout << "Nome: " << getNome() << std::endl;
-    std::cout << "ID: " << getId() << std::endl;
-    std::cout << "Status: " << (isAtivo() ? "Ativo" : "Inativo") << std::endl;
-    std::cout << "Carga: " << carga << " kg" << std::endl;
-    std::cout << "Séries: " << series << std::endl;
-    std::cout << "Repetições: " << repeticoes << std::endl;
-    std::cout << "Tempo de Descanso: " << tempoDescanso << " segundos" << std::endl;
+    cout << fixed << setprecision(2);
+    cout << "ID: " << getId()
+         << " | Nome: " << getNome()
+         << " | Tipo: Forca"
+         << " | Carga: " << carga << " kg"
+         << " | Series: " << series
+         << " | Repeticoes: " << repeticoes
+         << " | Descanso: " << descanso << "s"
+         << " | Status: " << (isAtivo() ? "Ativo" : "Inativo")
+         << endl;
 }
 
-// Calcular tempo estimado (em minutos)
 double Forca::calcularTempoEstimado() const {
-    double tempoSegundos = (series * repeticoes * 3) + (series * tempoDescanso);
-    return tempoSegundos / 60.0; // Serve para converter para minutos
+    double segundos = (static_cast<double>(series) * repeticoes * 3.0)
+                     + (static_cast<double>(series) * descanso);
+    return segundos / 60.0;
 }
 
-// Calcular calorias gastas
 double Forca::calcularCaloriasGastas() const {
-    return series * repeticoes * carga * 0.15;
+    return static_cast<double>(series) * repeticoes * carga * 0.15;
 }
 
-// Retornar tipo do exercício (2 = Força)
 int Forca::getTipo() const {
     return 2;
 }
 
-// Getters
-double Forca::getCarga() const { 
+double Forca::getCarga() const {
     return carga;
 }
 
-int Forca::getSeries() const { 
+int Forca::getSeries() const {
     return series;
 }
 
-int Forca::getRepeticoes() const { 
+int Forca::getRepeticoes() const {
     return repeticoes;
 }
 
-int Forca::getTempoDescanso() const { 
-    return tempoDescanso;
+int Forca::getDescanso() const {
+    return descanso;
 }

@@ -1,45 +1,42 @@
 #include "Cardio.h"
 #include <iostream>
+#include <iomanip>
 
-// Construtor para novos cadastros
-Cardio::Cardio(std::string nome, int duracao, double caloriasPorMinuto) 
-    : Exercicio(nome), duracao(duracao), caloriasPorMinuto(caloriasPorMinuto) {}
+using namespace std;
 
-// Construtor para leitura de arquivo
-Cardio::Cardio(int id, std::string nome, bool ativo, int duracao, double caloriasPorMinuto)
-    : Exercicio(id, nome, ativo), duracao(duracao), caloriasPorMinuto(caloriasPorMinuto) {}
+Cardio::Cardio(const string &nome, int duracao, double caloriasPorMin)
+    : Exercicio(nome), duracao(duracao), caloriasPorMin(caloriasPorMin) {}
 
-// Exibir detalhes do exercício
+Cardio::Cardio(int id, const string &nome, int duracao, double caloriasPorMin, bool ativo)
+    : Exercicio(id, nome, ativo), duracao(duracao), caloriasPorMin(caloriasPorMin) {}
+
 void Cardio::exibirDetalhes() const {
-    std::cout << "Nome: " << nome << "\n";
-    std::cout << "ID: " << id << "\n";
-    std::cout << "Status: " << (isAtivo() ? "Ativo" : "Inativo") << std::endl;
-    std::cout << "Duração: " << duracao << " min\n";
-    std::cout << "Calorias por minuto: " << caloriasPorMinuto << "\n";
-    std::cout << "Calorias estimadas: " << calcularCaloriasGastas() << "\n";
+    cout << fixed << setprecision(2);
+    cout << "ID: " << getId()
+         << " | Nome: " << getNome()
+         << " | Tipo: Cardio"
+         << " | Duracao: " << duracao << " min"
+         << " | Calorias/min: " << caloriasPorMin
+         << " | Status: " << (isAtivo() ? "Ativo" : "Inativo")
+         << endl;
 }
 
-// Calcular tempo estimado (duração em minutos)
 double Cardio::calcularTempoEstimado() const {
-    return duracao;
+    return static_cast<double>(duracao);
 }
 
-// Calcular calorias gastas
 double Cardio::calcularCaloriasGastas() const {
-    return duracao * caloriasPorMinuto;
+    return duracao * caloriasPorMin;
 }
 
-// Retornar tipo do exercício (1 = Cardio)
-int Cardio::getTipo() const {
+int Cardio::getTipo() const {   // ✅ AGORA IGUAL AO .h
     return 1;
 }
 
-// Getter de duração
 int Cardio::getDuracao() const {
     return duracao;
 }
 
-// Getter de calorias por minuto
-double Cardio::getCaloriasPorMinuto() const {
-    return caloriasPorMinuto;
+double Cardio::getCaloriasPorMin() const {
+    return caloriasPorMin;
 }

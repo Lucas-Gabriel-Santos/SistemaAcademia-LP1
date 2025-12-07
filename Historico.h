@@ -4,27 +4,29 @@
 #include <string>
 #include <vector>
 
-struct RegistroTreino {
-    std::string dataHora;
+using std::string;
+using std::vector;
+
+struct Registro {
+    string dataHora; // "DD/MM/AAAA HH:MM:SS"
     int idFicha;
-    std::string nomeFicha;
+    string nomeFicha;
     double tempoTotal;
     double caloriasTotal;
 };
 
 class Historico {
 private:
-    std::vector<RegistroTreino> registros;
+    vector<Registro> registros;
 
 public:
-    void adicionarRegistro(const RegistroTreino& registro);
-    void exibirHistorico() const;
-    const std::vector<RegistroTreino>& getRegistros() const;
-    
-    // Métodos para persistência
+    // assinatura que o Sistema.cpp chama:
+    void adicionarRegistro(int idFicha, const string &nomeFicha, double tempo, double calorias);
+
+    void exibirHistorico();
+    vector<Registro> getRegistros() const;
     void carregarDeArquivo();
-    void salvarEmArquivo() const;
+    void salvarEmArquivo();
 };
 
 #endif
-
