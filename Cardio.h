@@ -2,28 +2,31 @@
 #define CARDIO_H
 
 #include "Exercicio.h"
+#include <string>
 
 class Cardio : public Exercicio {
 private:
-    int duracao; // em minutos
-    double caloriasPorMinuto;
+    int duracao;              
+    double caloriasPorMin;    
 
 public:
-    // Construtor novo
-    Cardio(std::string nome, int duracao, double caloriasPorMinuto);
+    // Novo cadastro
+    Cardio(const std::string &nome, int duracao, double caloriasPorMin);
 
-    // Construtor arquivo
-    Cardio(int id, std::string nome, bool ativo, int duracao, double caloriasPorMinuto);
+    // Leitura de arquivo
+    Cardio(int id, const std::string &nome, int duracao, double caloriasPorMin, bool ativo);
 
-    // Implementação dos métodos virtuais
+    ~Cardio() override = default;
+
+    // ✅ AGORA COM CONST (IGUAL AO EXERCICIO.H)
     void exibirDetalhes() const override;
     double calcularTempoEstimado() const override;
     double calcularCaloriasGastas() const override;
     int getTipo() const override;
 
-    // Getters específicos
+    // Getters usados no Sistema
     int getDuracao() const;
-    double getCaloriasPorMinuto() const;
+    double getCaloriasPorMin() const;
 };
 
 #endif

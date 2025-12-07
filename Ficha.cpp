@@ -89,3 +89,13 @@ void Ficha::atualizarProximoId(int maiorId) {
         std::cout << "Proximo ID atualizado para: " << proximoId << std::endl;
     }
 }
+
+// Salvar ficha em arquivo (formato usado por Sistema::salvarDados)
+void Ficha::salvarEmArquivo(std::ofstream &arq) {
+    arq << id << ";" << nome << ";" << exercicios.size();
+    for (auto e : exercicios) {
+        if (e)
+            arq << ";" << e->getId();
+    }
+    arq << std::endl;
+}
