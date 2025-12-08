@@ -1,23 +1,18 @@
 #include "Exercicio.h"
 
-// Inicialização da variável estática
 int Exercicio::proximoId = 1;
 
-// Construtor para novos cadastros
 Exercicio::Exercicio(std::string nome) {
     this->nome = nome;
     this->ativo = true;
     this->id = proximoId++;
 }
 
-// Construtor para leitura de arquivo
 Exercicio::Exercicio(int id, std::string nome, bool ativo) {
     this->id = id;
     this->nome = nome;
     this->ativo = ativo;
     
-    // Se o ID lido do arquivo for maior ou igual ao próximo,
-    // atualizamos o contador para evitar colisões no futuro
     if (id >= proximoId) {
         proximoId = id + 1;
     }
@@ -46,4 +41,3 @@ void Exercicio::atualizarProximoId(int maiorId) {
         proximoId = maiorId + 1;
     }
 }
-

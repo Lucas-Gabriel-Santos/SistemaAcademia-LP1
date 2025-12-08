@@ -21,10 +21,8 @@ public:
     void exibirHistorico() const;
     const std::vector<RegistroTreino>& getRegistros() const;
     
-    // Métodos para persistência
     void carregarDeArquivo();
     void salvarEmArquivo() const;
 };
 
 #endif
-
