@@ -1,15 +1,12 @@
 #include "Sistema.h"
 #include "Cardio.h"
 #include "Forca.h"
-#include "Historico.h"
+#include "Utils.h" 
 #include <iostream>
 #include <fstream>
+#include <limits>
 #include <sstream>
-#include <vector>
-#include <ctime>
-#include <iomanip>
-
-using namespace std;
+#include <algorithm>
 
 Sistema::Sistema() {
     carregarDados();
@@ -17,290 +14,301 @@ Sistema::Sistema() {
 
 Sistema::~Sistema() {
     salvarDados();
-
-    for (auto e : exercicios)
-        delete e;
-
-    for (auto f : fichas)
-        delete f;
+    for (Exercicio* e : exercicios) delete e;
+    exercicios.clear();
+    for (Ficha* f : fichas) delete f;
+    fichas.clear();
 }
 
-// ================= CARREGAR DADOS =================
-
 void Sistema::carregarDados() {
-    ifstream arq("exercicios.txt");
-    string linha;
+    std::ifstream arqExercicio("exercicios.txt");
+    if (arqExercicio.is_open()) {
+        std::string linha;
+        int maiorId = 0;
+        while (std::getline(arqExercicio, linha)) {
+            if (linha.empty()) continue;
+            std::stringstream ss(linha);
+            std::string campo;
+            
+            int tipo, id, duracao, series, repeticoes, tempoDescanso;
+            std::string nome;
+            bool ativo;
+            double caloriasPorMinuto, carga;
 
-    while (getline(arq, linha)) {
-        stringstream ss(linha);
-        vector<string> dados;
-        string token;
+            try {
+                std::getline(ss, campo, ';'); tipo = std::stoi(campo);
+                std::getline(ss, campo, ';'); id = std::stoi(campo);
+                std::getline(ss, nome, ';');
 
-        while (getline(ss, token, ';'))
-            dados.push_back(token);
+                if (id > maiorId) maiorId = id;
 
-        int tipo = stoi(dados[0]);
-        int id = stoi(dados[1]);
-        string nome = dados[2];
+                if (tipo == 1) { 
+                    std::getline(ss, campo, ';'); duracao = std::stoi(campo);
+                    std::getline(ss, campo, ';'); caloriasPorMinuto = std::stod(campo);
+                    
+                    std::getline(ss, campo, ';'); ativo = (campo == "1");
 
-        if (tipo == 1) { // Cardio
-            int duracao = stoi(dados[3]);
-            double calMin = stod(dados[4]);
-            bool status = stoi(dados[5]);
+                    exercicios.push_back(new Cardio(id, nome, ativo, duracao, caloriasPorMinuto));
 
-            Cardio* c = new Cardio(id, nome, duracao, calMin, status);
-            exercicios.push_back(c);
+                } else if (tipo == 2) { // Força
+                    std::getline(ss, campo, ';'); carga = std::stod(campo);
+                    std::getline(ss, campo, ';'); series = std::stoi(campo);
+                    std::getline(ss, campo, ';'); repeticoes = std::stoi(campo);
+                    std::getline(ss, campo, ';'); tempoDescanso = std::stoi(campo);
+                    
+                    std::getline(ss, campo, ';'); ativo = (campo == "1");
 
-            Exercicio::atualizarProximoId(id);
+                    exercicios.push_back(new Forca(id, nome, ativo, carga, series, repeticoes, tempoDescanso));
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "Erro ao ler a linha: " << linha << std::endl;
+            }
         }
-        else if (tipo == 2) { // Forca
-            double carga = stod(dados[3]);
-            int series = stoi(dados[4]);
-            int reps = stoi(dados[5]);
-            int descanso = stoi(dados[6]);
-            bool status = stoi(dados[7]);
-
-            Forca* f = new Forca(id, nome, carga, series, reps, descanso, status);
-            exercicios.push_back(f);
-
-            Exercicio::atualizarProximoId(id);
-        }
+        arqExercicio.close();
+        Exercicio::atualizarProximoId(maiorId);
     }
 
-    arq.close();
+    std::ifstream arqFicha("fichas.txt");
+    if (arqFicha.is_open()) {
+        std::string linha;
+        int maiorId = 0;
+        while (std::getline(arqFicha, linha)) {
+            if (linha.empty()) continue;
+            std::stringstream ss(linha);
+            std::string campo;
+            
+            int idFicha, totalExercicios;
+            std::string nomeFicha;
 
-    ifstream arqF("fichas.txt");
+            try {
+                std::getline(ss, campo, ';'); idFicha = std::stoi(campo);
+                std::getline(ss, nomeFicha, ';');
+                std::getline(ss, campo, ';'); totalExercicios = std::stoi(campo);
 
-    while (getline(arqF, linha)) {
-        stringstream ss(linha);
-        vector<string> dados;
-        string token;
+                if (idFicha > maiorId) maiorId = idFicha;
+                
+                Ficha* novaFicha = new Ficha(idFicha, nomeFicha);
+                
+                for (int i = 0; i < totalExercicios; ++i) {
+                    std::getline(ss, campo, ';'); 
+                    int idExercicio = std::stoi(campo);
+                    
+                    Exercicio* ex = buscarExercicioPorId(idExercicio);
+                    if (ex) {
+                        novaFicha->adicionarExercicio(ex);
+                    }
+                }
+                fichas.push_back(novaFicha);
 
-        while (getline(ss, token, ';'))
-            dados.push_back(token);
-
-        int idFicha = stoi(dados[0]);
-        string nomeFicha = dados[1];
-        int total = stoi(dados[2]);
-
-        Ficha* ficha = new Ficha(idFicha, nomeFicha);
-
-        for (int i = 0; i < total; i++) {
-            int idEx = stoi(dados[3 + i]);
-            Exercicio* e = buscarExercicioPorId(idEx);
-            if (e != nullptr)
-                ficha->adicionarExercicio(e);
+            } catch (...) {}
         }
-
-        fichas.push_back(ficha);
-        Ficha::atualizarProximoId(idFicha);
+        arqFicha.close();
+        Ficha::atualizarProximoId(maiorId);
     }
-
-    arqF.close();
-
+    
     historico.carregarDeArquivo();
 }
 
-// ================= SALVAR DADOS =================
-
 void Sistema::salvarDados() {
-    ofstream arq("exercicios.txt");
+    std::ofstream arqExercicio("exercicios.txt");
+    if (arqExercicio.is_open()) {
+        for (const auto& e : exercicios) {
 
-    for (auto e : exercicios) {
-        if (dynamic_cast<Cardio*>(e)) {
-            Cardio* c = dynamic_cast<Cardio*>(e);
-            arq << "1;" << c->getId() << ";" << c->getNome() << ";"
-                << c->getDuracao() << ";" << c->getCaloriasPorMin()
-                << ";" << c->isAtivo() << endl;
+            arqExercicio << e->getTipo() << ";"
+                         << e->getId() << ";"
+                         << e->getNome() << ";";
+
+            if (e->getTipo() == 1) { // Cardio
+                Cardio* c = dynamic_cast<Cardio*>(e);
+                if (c) {
+                    arqExercicio << c->getDuracao() << ";"
+                                 << c->getCaloriasPorMinuto() << ";";
+                }
+            } else if (e->getTipo() == 2) { // Força
+                Forca* f = dynamic_cast<Forca*>(e);
+                if (f) {
+                    arqExercicio << f->getCarga() << ";"
+                                 << f->getSeries() << ";"
+                                 << f->getRepeticoes() << ";"
+                                 << f->getTempoDescanso() << ";";
+                }
+            }
+            arqExercicio << (e->isAtivo() ? "1" : "0") << "\n";
         }
-        else if (dynamic_cast<Forca*>(e)) {
-            Forca* f = dynamic_cast<Forca*>(e);
-            arq << "2;" << f->getId() << ";" << f->getNome() << ";"
-                << f->getCarga() << ";" << f->getSeries() << ";"
-                << f->getRepeticoes() << ";" << f->getDescanso()
-                << ";" << f->isAtivo() << endl;
-        }
+        arqExercicio.close();
     }
 
-    arq.close();
-
-    ofstream arqF("fichas.txt");
-
-    for (auto f : fichas)
-        f->salvarEmArquivo(arqF);
-
-    arqF.close();
-
+    std::ofstream arqFicha("fichas.txt");
+    if (arqFicha.is_open()) {
+        for (const auto& f : fichas) {
+            arqFicha << f->getId() << ";"
+                     << f->getNome() << ";"
+                     << f->getExercicios().size(); 
+            
+            for (const auto& e : f->getExercicios()) {
+                arqFicha << ";" << e->getId();
+            }
+            arqFicha << "\n";
+        }
+        arqFicha.close();
+    }
+    
     historico.salvarEmArquivo();
 }
 
-// ================= BUSCAS =================
-
 Exercicio* Sistema::buscarExercicioPorId(int id) {
-    for (auto e : exercicios)
-        if (e->getId() == id)
-            return e;
-
+    for (auto* e : exercicios) {
+        if (e->getId() == id) return e;
+    }
     return nullptr;
 }
 
 Ficha* Sistema::buscarFichaPorId(int id) {
-    for (auto f : fichas)
-        if (f->getId() == id)
-            return f;
-
+    for (auto* f : fichas) {
+        if (f->getId() == id) return f;
+    }
     return nullptr;
 }
 
-// ================= CADASTRO =================
-
 void Sistema::cadastrarExercicio() {
-    int tipo;
-    cout << "1 - Cardio | 2 - Forca: ";
-    cin >> tipo;
+    limparTela();
+    std::cout << "=== CADASTRO DE EXERCICIO ===" << std::endl;
+    
+    int tipo = lerInt("Tipo (1-Cardio, 2-Forca): ", 1, 2);
+    std::string nome = lerString("Nome: ");
 
-    string nome;
-    cout << "Nome: ";
-    cin.ignore();
-    getline(cin, nome);
+    Exercicio* novo = nullptr;
 
     if (tipo == 1) {
-        int duracao;
-        double calMin;
-
-        cout << "Duracao: ";
-        cin >> duracao;
-
-        cout << "Calorias por minuto: ";
-        cin >> calMin;
-
-        exercicios.push_back(new Cardio(nome, duracao, calMin));
-    }
-    else {
-        double carga;
-        int series, reps, descanso;
-
-        cout << "Carga: ";
-        cin >> carga;
-
-        cout << "Series: ";
-        cin >> series;
-
-        cout << "Repeticoes: ";
-        cin >> reps;
-
-        cout << "Descanso: ";
-        cin >> descanso;
-
-        exercicios.push_back(new Forca(nome, carga, series, reps, descanso));
+        int dur = lerInt("Duracao (min): ", 1, 999);
+        double cal = lerDouble("Calorias/min: ");
+        novo = new Cardio(nome, dur, cal);
+    } else {
+        double carga = lerDouble("Carga (kg): ");
+        int series = lerInt("Series: ", 1, 999);
+        int reps = lerInt("Repeticoes: ", 1, 999);
+        int descanso = lerInt("Descanso (seg): ", 0, 999);
+        novo = new Forca(nome, carga, series, reps, descanso);
     }
 
-    cout << "Exercicio cadastrado!\n";
+    if (novo) {
+        exercicios.push_back(novo);
+        std::cout << "Exercicio cadastrado com ID: " << novo->getId() << std::endl;
+    }
+    pausar();
 }
 
-// ================= LISTAGENS =================
-
 void Sistema::listarExercicios() {
-    for (auto e : exercicios)
-        if (e->isAtivo())
+    limparTela();
+    std::cout << "=== EXERCICIOS ATIVOS ===" << std::endl;
+    bool achou = false;
+    for (const auto& e : exercicios) {
+        if (e->isAtivo()) {
             e->exibirDetalhes();
+            std::cout << "-------------------------" << std::endl;
+            achou = true;
+        }
+    }
+    if (!achou) std::cout << "Nenhum exercicio ativo." << std::endl;
+    pausar();
 }
 
 void Sistema::excluirExercicio() {
-    int id;
-    cout << "ID: ";
-    cin >> id;
+    listarExercicios();
+    int id = lerInt("ID para excluir (0 para voltar): ");
+    if (id == 0) return;
 
     Exercicio* e = buscarExercicioPorId(id);
-
-    if (e != nullptr) {
+    if (e) {
         e->desativar();
-        cout << "Exercicio desativado!\n";
+        std::cout << "Exercicio desativado." << std::endl;
+    } else {
+        std::cout << "Exercicio nao encontrado." << std::endl;
     }
-    else {
-        cout << "Nao encontrado.\n";
-    }
+    pausar();
 }
 
-// ================= FICHAS =================
-
 void Sistema::criarFicha() {
-    string nome;
-
-    cout << "Nome da ficha: ";
-    cin.ignore();
-    getline(cin, nome);
-
-    Ficha* f = new Ficha(nome);
-    fichas.push_back(f);
-
-    cout << "Ficha criada!\n";
+    limparTela();
+    std::string nome = lerString("Nome da Ficha: ");
+    Ficha* nova = new Ficha(nome);
+    fichas.push_back(nova);
+    std::cout << "Ficha criada com ID: " << nova->getId() << std::endl;
+    pausar();
 }
 
 void Sistema::adicionarExercicioFicha() {
-    int idFicha, idEx;
+    listarFichas();
+    if (fichas.empty()) return;
 
-    cout << "ID da ficha: ";
-    cin >> idFicha;
-
-    cout << "ID do exercicio: ";
-    cin >> idEx;
-
+    int idFicha = lerInt("ID da Ficha: ");
     Ficha* f = buscarFichaPorId(idFicha);
-    Exercicio* e = buscarExercicioPorId(idEx);
-
-    if (f && e) {
-        f->adicionarExercicio(e);
-        cout << "Exercicio adicionado!\n";
-    }
-    else {
-        cout << "Erro ao adicionar.\n";
-    }
-}
-
-void Sistema::listarFichas() {
-    for (auto f : fichas)
-        f->exibirFicha();
-}
-
-// ================= HISTORICO =================
-
-void Sistema::registrarTreino() {
-    int idFicha;
-
-    cout << "ID da ficha: ";
-    cin >> idFicha;
-
-    Ficha* f = buscarFichaPorId(idFicha);
-
     if (!f) {
-        cout << "Ficha nao encontrada!\n";
+        std::cout << "Ficha nao encontrada." << std::endl;
+        pausar();
         return;
     }
 
-    double tempo = f->calcularTempoTotal();
-    double calorias = f->calcularCaloriasTotais();
+    std::cout << "\n=== EXERCICIOS DISPONIVEIS ===" << std::endl;
+    bool achouEx = false;
+    for (const auto& e : exercicios) {
+        if (e->isAtivo()) {
+            std::cout << "ID: " << e->getId() << " - " << e->getNome() << std::endl;
+            achouEx = true;
+        }
+    }
+    if (!achouEx) {
+        std::cout << "Nenhum exercicio disponivel para adicionar." << std::endl;
+        pausar();
+        return;
+    }
 
-    // Construir um RegistroTreino e passar o objeto para o histórico
-    RegistroTreino reg;
-    // Preencher data/hora atual formatada
-    std::time_t now = std::time(nullptr);
-    std::tm* lt = std::localtime(&now);
-    std::ostringstream oss;
-    oss << std::put_time(lt, "%Y-%m-%d %H:%M:%S");
-    reg.dataHora = oss.str();
-
-    reg.idFicha = f->getId();
-    reg.nomeFicha = f->getNome();
-    reg.tempoTotal = tempo;
-    reg.caloriasTotal = calorias;
-
-    historico.adicionarRegistro(reg);
-
-    cout << "Treino registrado!\n";
+    int idEx = lerInt("ID do Exercicio: ");
+    Exercicio* e = buscarExercicioPorId(idEx);
+    
+    if (e && e->isAtivo()) {
+        f->adicionarExercicio(e);
+        std::cout << "Exercicio adicionado!" << std::endl;
+    } else {
+        std::cout << "Exercicio inválido ou inativo." << std::endl;
+    }
+    pausar();
 }
 
+void Sistema::listarFichas() {
+    limparTela();
+    std::cout << "--- FICHAS ---" << std::endl;
+    if (fichas.empty()) std::cout << "Nenhuma ficha cadastrada." << std::endl;
+    
+    for (const auto& f : fichas) {
+        f->exibirFicha();
+    }
+    pausar();
+}
+
+void Sistema::registrarTreino() {
+    listarFichas();
+    if (fichas.empty()) return;
+
+    int id = lerInt("ID da Ficha realizada: ");
+    Ficha* f = buscarFichaPorId(id);
+    if (f) {
+        RegistroTreino reg;
+        reg.dataHora = obterDataHoraAtual();
+        reg.idFicha = f->getId();
+        reg.nomeFicha = f->getNome();
+        reg.tempoTotal = f->calcularTempoTotal();
+        reg.caloriasTotal = f->calcularCaloriasTotais();
+        
+        historico.adicionarRegistro(reg);
+    } else {
+        std::cout << "Ficha nao encontrada." << std::endl;
+    }
+    pausar();
+}
 
 void Sistema::exibirHistorico() {
+    limparTela();
     historico.exibirHistorico();
+    pausar();
 }

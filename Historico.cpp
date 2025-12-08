@@ -4,113 +4,90 @@
 #include <iomanip>
 #include <sstream>
 
-// Adicionar registro ao histórico
 void Historico::adicionarRegistro(const RegistroTreino& registro) {
     registros.push_back(registro);
-    std::cout << "Registro de treino para a ficha '" 
-              << registro.nomeFicha << "' (" << registro.dataHora << ") adicionado." << std::endl;
+    std::cout << "Registro de treino adicionado: " << registro.nomeFicha << " em " << registro.dataHora << std::endl;
 }
 
-// Exibir histórico completo
 void Historico::exibirHistorico() const {
-    std::cout << "\n=================================================" << std::endl;
-    std::cout << "             HISTÓRICO DE TREINO             " << std::endl;
-    std::cout << "=================================================" << std::endl;
-
+    std::cout << "\n----------------------------------------" << std::endl;
+    std::cout << "HISTÓRICO DE TREINOS (" << registros.size() << " Registros)" << std::endl;
+    
     if (registros.empty()) {
-        std::cout << "Histórico sem registros." << std::endl;
-        return;
+        std::cout << "Nenhum Registro Cncontrado." << std::endl;
+    } else {
+        for (const auto& reg : registros) {
+            std::cout << "Data/Hora: " << reg.dataHora << std::endl;
+            std::cout << "Ficha ID: " << reg.idFicha << " | Nome: " << reg.nomeFicha << std::endl;
+            std::cout << std::fixed << std::setprecision(2);
+            std::cout << "Tempo Total: " << reg.tempoTotal << " min | Calorias Total: " << reg.caloriasTotal << " kcal" << std::endl;
+        }
     }
-
-    // Garante que os números de ponto flutuante sejam exibidos corretamente
-    std::cout << std::fixed << std::setprecision(2);
-
-    for (const auto& registro : registros) {
-        std::cout << "Data/Hora: " << registro.dataHora << std::endl;
-        std::cout << "Ficha ID:  " << registro.idFicha << std::endl;
-        std::cout << "Nome Ficha: " << registro.nomeFicha << std::endl;
-        std::cout << "Tempo Total: " << registro.tempoTotal << " min" << std::endl;
-        std::cout << "Calorias Totais: " << registro.caloriasTotal << " kcal" << std::endl;
-        std::cout << "-------------------------------------------------" << std::endl;
-    }
+    std::cout << "----------------------------------------" << std::endl;
 }
 
-// Getter de registros
 const std::vector<RegistroTreino>& Historico::getRegistros() const {
-    static std::vector<RegistroTreino> registros; 
     return registros;
 }
 
-// Carregar histórico do arquivo
 void Historico::carregarDeArquivo() {
     std::ifstream arquivo("historico.txt");
-    registros.clear(); // Limpando registros
-
     if (!arquivo.is_open()) {
-        std::cout << "Arquivo historico.txt não encontrado. Começando com histórico vazio." << std::endl;
+        std::cerr << "AVISO: Não foi possível abrir o arquivo historico.txt para leitura." << std::endl;
         return;
     }
 
+    registros.clear(); 
     std::string linha;
-    int linhasLidas = 0;
+    std::string campo;
     
     while (std::getline(arquivo, linha)) {
         if (linha.empty()) continue;
-
+        
+        RegistroTreino reg;
         std::stringstream ss(linha);
-        std::string segmento;
-        RegistroTreino novoRegistro;
         
         try {
-            // 1. dataHora
-            std::getline(ss, novoRegistro.dataHora, ',');
+            std::getline(ss, reg.dataHora, ';'); 
 
-            // 2. idFicha
-            std::getline(ss, segmento, ',');
-            novoRegistro.idFicha = std::stoi(segmento);
+            std::getline(ss, campo, ';'); 
+            reg.idFicha = std::stoi(campo);
+ 
+            std::getline(ss, reg.nomeFicha, ';'); 
 
-            // 3. nomeFicha
-            std::getline(ss, novoRegistro.nomeFicha, ',');
-
-            // 4. tempoTotal
-            std::getline(ss, segmento, ',');
-            novoRegistro.tempoTotal = std::stod(segmento);
-
-            // 5. caloriasTotal 
-            std::getline(ss, segmento, '\n'); 
-            novoRegistro.caloriasTotal = std::stod(segmento);
+            std::getline(ss, campo, ';');
+           
+            reg.tempoTotal = std::stod(campo); 
             
-            registros.push_back(novoRegistro);
-            linhasLidas++;
+            std::getline(ss, campo, ';');
+            reg.caloriasTotal = std::stod(campo);
+            
+            registros.push_back(reg);
 
         } catch (const std::exception& e) {
-            std::cerr << "Aviso: Linha mal formatada ou tipo de dado incorreto no arquivo, pulando." << std::endl;
+            std::cerr << "Erro ao processar linha do histórico: " << linha << " (" << e.what() << ")" << std::endl;
         }
     }
-
     arquivo.close();
-    std::cout << linhasLidas << " Registros carregados do arquivo." << std::endl;
+    std::cout << registros.size() << "Registros carregados do historico.txt." << std::endl;
 }
 
-// Salvar histórico no arquivo
 void Historico::salvarEmArquivo() const {
-    std::ofstream arquivo("historico.txt"); 
-    
+    std::ofstream arquivo("historico.txt");
     if (!arquivo.is_open()) {
-        std::cerr << "ERRO: Não foi possível abrir o arquivo historico.txt para salvar." << std::endl;
+        std::cerr << "ERRO: Não foi possível abrir o arquivo historico.txt para escrita." << std::endl;
         return;
     }
 
-    arquivo << std::fixed << std::setprecision(2); 
-
-    for (const auto& registro : registros) {
-        arquivo << registro.dataHora << ","
-                << registro.idFicha << ","
-                << registro.nomeFicha << "," 
-                << registro.tempoTotal << ","
-                << registro.caloriasTotal << "\n";
+    for (const auto& reg : registros) {
+        arquivo << std::fixed << std::setprecision(2)
+                << reg.dataHora << ";"
+                << reg.idFicha << ";"
+                << reg.nomeFicha << ";"
+                << reg.tempoTotal << ";"
+                << reg.caloriasTotal << "\n";
     }
 
     arquivo.close();
-    std::cout << "Histórico salvo com sucesso em historico.txt." << std::endl;
+    std::cout << registros.size() << "Registros salvos no historico.txt." << std::endl;
 }

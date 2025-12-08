@@ -1,101 +1,94 @@
 #include "Ficha.h"
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
 
 int Ficha::proximoId = 1;
 
-// Construtor para novos cadastros
 Ficha::Ficha(std::string nome) {
-    this -> proximoId++;
-    std::cout << "Ficha criada com ID: " << this->id << " para " << this->nome << std::endl;
+    this->nome = nome;
+    this->id = proximoId++; 
 }
 
-// Construtor para leitura de arquivo
-Ficha::Ficha(int id, std::string nome) : id(id), nome(nome) {
+Ficha::Ficha(int id, std::string nome) {
+    this->id = id;
+    this->nome = nome;
+  
+    if (id >= proximoId) {
+        proximoId = id + 1;
+    }
 }
 
-// Destrutor (não deletar exercícios, apenas limpar vector)
+
 Ficha::~Ficha() {
-    exercicios.clear();
-    std::cout << "Ficha ID " << id << " destruída." << std::endl;
+    exercicios.clear(); 
 }
 
 // Adicionar exercício à ficha
 void Ficha::adicionarExercicio(Exercicio* exercicio) {
-    if(exercicio != nullptr){
+    if (exercicio != nullptr) {
         exercicios.push_back(exercicio);
-        std::cout << "Exercício adicionado à ficha ID " << id << "." << std::endl;
     }
 }
 
-// Exibir ficha completa com exercícios e totais
 void Ficha::exibirFicha() const {
-    std::cout << "\n--------------------------------------------------" << std::endl;
-    std::cout << "FICHA DE TREINO ID: " << std::setw(3) << std::setfill('0') << id << std::endl;
-    std::cout << "Aluno(a): " << nome << std::endl;
-    std::cout << "--------------------------------------------------" << std::endl;
-
+    std::cout << "\n----------------------------------------" << std::endl;
+    std::cout << "FICHA ID: " << id << " | Nome: " << nome << std::endl;
+    std::cout << "------------------------------------------" << std::endl;
+    
     if (exercicios.empty()) {
-        std::cout << "Nenhum exercício cadastrado nesta ficha." << std::endl;
+        std::cout << "Nenhum exercício cadastrado na ficha." << std::endl;
     } else {
-        std::cout << "\n--- EXERCÍCIOS ---" << std::endl;
-        for (const auto& exercicio : exercicios) {
-            // Presumindo um método exibirDetalhes() na classe Exercicio
-            exercicio->exibirDetalhes(); 
+        std::cout << "EXERCÍCIOS ATIVOS:" << std::endl;
+        for (size_t i = 0; i < exercicios.size(); ++i) {
+            if (exercicios[i]->isAtivo()) {
+                std::cout << "  " << i + 1 << ". ";
+                exercicios[i]->exibirDetalhes(); 
+            }
         }
-        std::cout << "\n--- TOTAIS DA FICHA ---" << std::endl;
-        std::cout << std::fixed << std::setprecision(2);
-        std::cout << "Tempo Total (min): " << calcularTempoTotal() << std::endl;
-        std::cout << "Calorias Totais (kcal): " << calcularCaloriasTotais() << std::endl;
     }
-    std::cout << "--------------------------------------------------" << std::endl;
+
+    std::cout << "\nRESUMO TOTAL DA FICHA (Apenas exercícios Ativos):" << std::endl;
+    std::cout << std::fixed << std::setprecision(2);
+    std::cout << "Tempo Total Estimado: " << calcularTempoTotal() << " minutos" << std::endl;
+    std::cout << "Calorias Totais Estimadas: " << calcularCaloriasTotais() << " kcal" << std::endl;
+    std::cout << "----------------------------------------" << std::endl;
 }
 
-// Calcular tempo total da ficha
 double Ficha::calcularTempoTotal() const {
     double total = 0.0;
-    for(const auto& exercicio : exercicios){
-        total += exercicio->calcularTempoEstimado();
+    for (const auto& exec : exercicios) {
+        if (exec->isAtivo()) {
+             total += exec->calcularTempoEstimado();
+        }
     }
     return total;
 }
 
-// Calcular calorias totais da ficha
 double Ficha::calcularCaloriasTotais() const {
     double total = 0.0;
-    for(const auto& exercicio : exercicios){
-        total += exercicio->calcularCaloriasGastas();
+    for (const auto& exec : exercicios) {
+        if (exec->isAtivo()) {
+            total += exec->calcularCaloriasGastas();
+        }
     }
     return total;
 }
 
-// Getters
 int Ficha::getId() const { 
-    return id;
+    return id; 
 }
 
 std::string Ficha::getNome() const { 
-    return nome;
+    return nome; 
 }
 
 const std::vector<Exercicio*>& Ficha::getExercicios() const {
     return exercicios; 
 }
 
-// Atualizar próximo ID
 void Ficha::atualizarProximoId(int maiorId) {
     if (maiorId >= proximoId) {
         proximoId = maiorId + 1;
-        std::cout << "Proximo ID atualizado para: " << proximoId << std::endl;
     }
-}
-
-// Salvar ficha em arquivo (formato usado por Sistema::salvarDados)
-void Ficha::salvarEmArquivo(std::ofstream &arq) {
-    arq << id << ";" << nome << ";" << exercicios.size();
-    for (auto e : exercicios) {
-        if (e)
-            arq << ";" << e->getId();
-    }
-    arq << std::endl;
 }

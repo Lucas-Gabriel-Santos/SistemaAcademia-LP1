@@ -2,34 +2,38 @@
 #include <iostream>
 #include <iomanip>
 
-using namespace std;
 
-Cardio::Cardio(const string &nome, int duracao, double caloriasPorMin)
-    : Exercicio(nome), duracao(duracao), caloriasPorMin(caloriasPorMin) {}
-
-Cardio::Cardio(int id, const string &nome, int duracao, double caloriasPorMin, bool ativo)
-    : Exercicio(id, nome, ativo), duracao(duracao), caloriasPorMin(caloriasPorMin) {}
-
-void Cardio::exibirDetalhes() const {
-    cout << fixed << setprecision(2);
-    cout << "ID: " << getId()
-         << " | Nome: " << getNome()
-         << " | Tipo: Cardio"
-         << " | Duracao: " << duracao << " min"
-         << " | Calorias/min: " << caloriasPorMin
-         << " | Status: " << (isAtivo() ? "Ativo" : "Inativo")
-         << endl;
+Cardio::Cardio(std::string nome, int duracao, double caloriasPorMinuto) : Exercicio(nome) {
+    this->duracao = duracao;
+    this->caloriasPorMinuto = caloriasPorMinuto;
+    std::cout << "Novo Cardio criado (ID: " << getId() << ") ==" << std::endl;
 }
 
+Cardio::Cardio(int id, std::string nome, bool ativo, int duracao, double caloriasPorMinuto)
+    : Exercicio(id, nome, ativo) {
+    this->duracao = duracao;
+    this->caloriasPorMinuto = caloriasPorMinuto;
+}
+
+void Cardio::exibirDetalhes() const {
+    std::cout << "    [CARDIO] - ID: " << getId() << " | Nome: " << getNome() << std::endl;
+    std::cout << "    Status: " << (isAtivo() ? "Ativo" : "Inativo") << std::endl;
+    std::cout << "    Duração: " << duracao << " min" << std::endl;
+    std::cout << "    Calorias/Minuto: " << std::fixed << std::setprecision(2) << caloriasPorMinuto << " kcal/min" << std::endl;
+    std::cout << "    >> Tempo Estimado: " << std::fixed << std::setprecision(2) << calcularTempoEstimado() << " min" << std::endl;
+    std::cout << "    >> Calorias Gastas: " << std::fixed << std::setprecision(2) << calcularCaloriasGastas() << " kcal" << std::endl;
+}
+
+
 double Cardio::calcularTempoEstimado() const {
-    return static_cast<double>(duracao);
+    return (double)duracao;
 }
 
 double Cardio::calcularCaloriasGastas() const {
-    return duracao * caloriasPorMin;
+    return duracao * caloriasPorMinuto;
 }
 
-int Cardio::getTipo() const {   // ✅ AGORA IGUAL AO .h
+int Cardio::getTipo() const {
     return 1;
 }
 
@@ -37,6 +41,6 @@ int Cardio::getDuracao() const {
     return duracao;
 }
 
-double Cardio::getCaloriasPorMin() const {
-    return caloriasPorMin;
+double Cardio::getCaloriasPorMinuto() const {
+    return caloriasPorMinuto;
 }
